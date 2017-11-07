@@ -1,0 +1,13 @@
+name: eyeIn
+title: eyeIn
+username:
+account: xiegu
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 201669
+bundleId: 1061291
+url: https://xiegu.shinyapps.io/eyein/
+when: 1509980552.85874
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: ..segment.2017-10-19_15_35_38|..segment.2017-10-19_15_38_00|..segment.2017-10-19_15_40_03|..segment.2017-10-19_15_42_22|..segment.2017-10-19_15_43_05|..segment.2017-10-19_16_10_35|..segment.2017-10-19_16_11_14|..segment.2017-10-19_16_11_34|..segment.2017-10-19_16_11_49|..segment.2017-10-19_16_15_54|..segment.2017-10-19_16_16_22|..segment.2017-10-19_16_16_36|..segment.2017-10-19_16_16_48|..segment.2017-10-19_16_17_56|..segment.2017-10-19_16_18_09|..segment.2017-10-19_16_18_10|..segment.2017-10-19_16_18_18|..segment.2017-10-19_16_18_33|..segment.2017-10-19_16_19_12|flexdashboard_demo.html|flexdashboard_demo.Rmd|score_calculator.R|score.html|score.rmd|data/competitor_demo.RData|data/GDP_topCity_China.xls|data/haier_shanghai_demo.RData|data/haier_shanghai_demo.RData.bak|data/haier_shanghai_score.RData|data/haier_zhengzhou_demo.RData|data/haier_zhengzhou_demo.RData.bak|data/haier_zhengzhou_score.RData|data/Pop_topCity_China.xls|data/PropertyPrice_topCity_China.xls|data/Salary_topCity_China.xls|data/Untitled Document|www/logo.png

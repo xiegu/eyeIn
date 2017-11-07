@@ -1,0 +1,392 @@
+---
+title: "不同地区score的计算方法"
+author: "Sijia Li"
+date: "8/9/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(scales)
+library(flexdashboard)
+library(leaflet)
+library(leafletCN)
+library(DT)
+```
+
+
+```{r}
+load("/home/xiegu/R_code/eyeIn/haier_shanghai_demo.RData")
+load("/home/xiegu/R_code/eyeIn/haier_zhengzhou_demo.RData")
+```
+
+## 一、合并mart, bus, shop, resid数据
+### 直方图初步观察数据形状
+
+```{r, fig.width=6,fig.height=8}
+par(mfrow = c(4,3))
+
+hist(haierZhengzhouTable$mart_5000, main = "mart_5000")
+hist(haierZhengzhouTable$mart_1000, main = "mart_1000")
+hist(haierZhengzhouTable$mart_500, main = "mart_500")
+
+hist(haierZhengzhouTable$bus_1000, main = "bus_1000")
+hist(haierZhengzhouTable$bus_500, main = "bus_500")
+plot.new()
+
+
+hist(haierZhengzhouTable$shop_5000, main = "shop_5000")
+hist(haierZhengzhouTable$shop_1000, main = "shop_1000")
+hist(haierZhengzhouTable$shop_500, main = "shop_500")
+
+hist(haierZhengzhouTable$resid_5000, main = "resid_5000")
+hist(haierZhengzhouTable$resid_1000, main = "resid_1000")
+hist(haierZhengzhouTable$resid_500, main = "resid_500")
+```
+
+本部分的逻辑在于：通过使用上图的变量，创建线性组合，获得mart, bus, shop, resid四个变量。期待的情况是线性组合后的变量可以是正态分布或呈现长尾分布。以mart为例，mart = a * mart_5000 + b * mart_1000 + c * mart_500。
+
+下面这段代码的目的是罗列所有满足a + b + c = 1的组合，画出所有情况下mart的直方图，寻找最接近正态或长尾的分布。因篇幅有限，图不在此列出。
+
+```{r}
+par <- data.frame(a = NA, b = NA, c = NA)
+for (i in 1:11) {
+  a <- ((i-1)/10)
+  rest <- 12 - i
+  for (j in 1:rest) {
+    b = ((j-1)/10)
+    c = 1 - a - b
+    par <- rbind(par, c(a, b, round(c,2)))
+  }
+}
+par <- par[-c(1),] # 获取所有a, b, c的组合
+```
+
+### mart
+```{r}
+m <- numeric()
+for (i in 1:nrow(par)) {
+  a <- par[i,1]
+  b <- par[i,2]
+  c <- par[i,3]
+  mart <- a * haierZhengzhouTable$mart_5000 + b * haierZhengzhouTable$mart_1000 + c * haierZhengzhouTable$mart_500
+  hist(mart)
+  qqnorm(mart)
+  print(i)
+  print(shapiro.test(mart)$p.value)
+  m[i] = shapiro.test(mart)$p.value
+}
+which.max(m)
+```
+
+
+```{r}
+pm <- as.numeric(par[which.max(m), ])
+# 0.1 0.9 0
+p1 <- as.numeric(pm[1])
+p2 <- as.numeric(pm[2])
+p3 <- as.numeric(pm[3])
+mart <- p1 * haierZhengzhouTable$mart_5000 + p2 * haierZhengzhouTable$mart_1000 +  p3 * haierZhengzhouTable$mart_500
+
+# test with shanghai data
+#hist(mart <- p1 * haierShanghaiTable$mart_5000 + p2 * haierShanghaiTable$mart_1000 + p3 * haierShanghaiTable$mart_500, main = "test with shanghai 'mart' data ")
+```
+
+上段代码是在用郑州的数据建模，用上海的数据测试。我们可以看到上海的数据并不是非常正态分布，可能是由于上海数据只有24行造成的。
+
+
+
+### shop, bank, resid
+遵循同样的逻辑，我们可以获得shop, bank, resid的线性排列组合。
+
+```{r}
+# shop
+s <- numeric()
+for (i in 1:nrow(par)) {
+  a <- par[i,1]
+  b <- par[i,2]
+  c <- par[i,3]
+  shop <- a * haierZhengzhouTable$shop_5000 + b * haierZhengzhouTable$shop_1000 + c * haierZhengzhouTable$shop_500
+  hist(shop)
+  qqnorm(shop)
+  print(i)
+  print(shapiro.test(shop)$p.value)
+  s[i] = shapiro.test(shop)$p.value
+}
+which.max(s)
+ps <- as.numeric(par[which.max(s), ])
+p1 <- as.numeric(ps[1])
+p2 <- as.numeric(ps[2])
+p3 <- as.numeric(ps[3])
+shop <- p1 * haierZhengzhouTable$shop_5000 + p2 * haierZhengzhouTable$shop_1000 + p3 * haierZhengzhouTable$shop_500
+hist(shop)
+# shop use row 51 of par
+
+
+
+# bank
+b <- numeric()
+for (i in 1:nrow(par)) {
+  a <- par[i,1]
+  b <- par[i,2]
+  c <- par[i,3]
+  bank <- a * haierZhengzhouTable$bank_5000 + b * haierZhengzhouTable$bank_1000 + c * haierZhengzhouTable$bank_500
+  hist(bank)
+  qqnorm(bank)
+  print(i)
+  print(shapiro.test(bank)$p.value)
+  b[i] = shapiro.test(bank)$p.value
+}
+which.max(b)
+pb <- as.numeric(par[which.max(b), ])
+p1 <- as.numeric(pb[1])
+p2 <- as.numeric(pb[2])
+p3 <- as.numeric(pb[3])
+bank <- p1 * haierZhengzhouTable$bank_5000 + p2 * haierZhengzhouTable$bank_1000 + p3 * haierZhengzhouTable$bank_500
+hist(bank)
+# bank use row 6 of par
+
+
+
+# resid
+r <- numeric()
+for (i in 1:nrow(par)) {
+  a <- par[i,1]
+  b <- par[i,2]
+  c <- par[i,3]
+  resid <- a * haierZhengzhouTable$resid_5000 + b * haierZhengzhouTable$resid_1000 + c * haierZhengzhouTable$resid_500
+  hist(resid)
+  qqnorm(resid)
+  print(i)
+  print(shapiro.test(resid)$p.value)
+  r[i] = shapiro.test(resid)$p.value
+}
+# reside use row 18 of par
+which.max(r)
+pr <- as.numeric(par[which.max(r), ])
+p1 <- as.numeric(pr[1])
+p2 <- as.numeric(pr[2])
+p3 <- as.numeric(pr[3])
+resid <- p1 * haierZhengzhouTable$resid_5000 + p2 * haierZhengzhouTable$resid_1000 + p3 * haierZhengzhouTable$resid_500
+hist(resid)
+```
+
+
+
+
+
+### bus
+由于bus只有bus_1000和bus_500的数据，操作上会稍微有些不一样，但逻辑一致，最后得到的是一个bus = a * bus_1000 + b * bus_500的线性组合。
+```{r}
+vec <- seq(0,1,0.1)
+bu <- numeric()
+for (i in 1:11) {
+  a <- vec[i]
+  bus <- a * haierZhengzhouTable$bus_1000 + (1-a) * haierZhengzhouTable$bus_500
+  hist(bus)
+  qqnorm(bus)
+  print(i)
+  print(shapiro.test(bus)$p.value)
+  bu[i] = shapiro.test(resid)$p.value
+}
+which.max(bu)
+```
+
+```{r}
+# choose the first plot, par = 0, 1
+pbu <- c(vec[which.max(bu)], 1- vec[which.max(bu)])
+p1 <- pbu[1]
+p2 <- pbu[2]
+bus <- p1 * haierZhengzhouTable$bus_1000 + p2 * haierZhengzhouTable$bus_500
+hist(bus)
+```
+
+### parking
+```{r}
+pp <- 1
+parking <- pp * haierZhengzhouTable$parking_500
+```
+
+
+### competition
+```{r}
+# hist(haierZhengzhouTable$gome_1000)
+# hist(haierZhengzhouTable$gome_500)
+# hist(haierZhengzhouTable$suning_1000)
+# hist(haierZhengzhouTable$suning_500)
+# hist(haierZhengzhouTable$gree_1000)
+# hist(haierZhengzhouTable$gree_500)
+
+competition <- ((haierZhengzhouTable$gome_1000 + haierZhengzhouTable$gome_500 + haierZhengzhouTable$suning_500 + haierZhengzhouTable$suning_1000)*3 + (haierZhengzhouTable$gree_500 + haierZhengzhouTable$gree_1000)*2)/16
+
+hist(competition)
+
+```
+
+
+
+
+### Part 1 总结
+
+我们可以获得mart, bus, shop, bank, resid, parking的计算方法及分布，如下。
+```{r}
+par(mfrow = c(4,2))
+hist(mart)
+hist(bus)
+hist(shop)
+hist(bank)
+hist(resid)
+hist(parking)
+hist(competition)
+```
+
+## 二、计算life, traffic, business, development得分以及总得分
+
+先将mart bus shop bank resid rescale到60至100分
+```{r}
+mart <- rescale(mart, to = c(60, 100))
+bus <- rescale(bus, to = c(60, 100))
+shop <- rescale(shop, to = c(60, 100))
+bank <- rescale(bank, to = c(60, 100))
+resid <- rescale(resid, to = c(60, 100))
+parking <- rescale(parking, to = c(60, 100))
+competition <- rescale(competition, to = c(60, 100))
+```
+
+
+```{r}
+life <- 0.6 * mart + 0.1 * bank + 0.3 * resid
+traffic <- 0.5 * bus + 0.5 * parking
+business <- 0.8 * mart + 0.2 * shop
+development <- 0 * bank + 0.9 * mart + 0.1 * resid
+# competition
+final.score <- 0.25 * life + 0.25 * traffic + 0.25 * business + 0.15 * development + 0.1 * competition
+df <- data.frame(life, traffic, business, development, competition, final.score)
+```
+
+```{r}
+par(mfrow = c(3,2))
+hist(life)
+hist(traffic)
+hist(business)
+hist(development)
+hist(competition)
+hist(final.score)
+```
+
+```{r}
+haierZhengzhouTable <- data.frame(haierZhengzhouTable, round(data.frame(score.life = life, score.traffic = traffic, score.business = business, score.development = development, score.competition = competition, score.final = final.score),0))
+cityPopDensity <- sum(zhengzhou_pop_area$population)/sum(zhengzhou_pop_area$area)*10000
+haierZhengzhouTable <- mutate(haierZhengzhouTable, score.final.adj1 = score.final*cityPopDensity/popoverarea)
+save(haierZhengzhouTable, file = "data/haier_zhengzhou_score.RData")
+```
+
+
+
+```{r, eval = FALSE}
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = zzDistrictMap$value)
+
+pop1 <- paste0("<strong>区域: </strong>", 
+               zzDistrictMap$name, 
+               "<br><strong>", 
+               "人口密度(人数/平方千米)", 
+               ": </strong>", 
+               zzDistrictMap$value
+)
+
+
+a_popup <- paste0("<strong>名称: </strong>", 
+                  zzDistrictMap$name, 
+                  "<br><strong>", 
+                  "电话", 
+                  ": </strong>", 
+                  zzDistrictMap$telephone,
+                  "<br><strong>", 
+                  "地址", 
+                  ": </strong>",
+                  zzDistrictMap$address
+)
+```
+
+```{r, eval = FALSE}
+leaflet(zzDistrictMap)%>%amap(group = '高德地图')%>%
+  addMiniMap()%>%
+  addMarkers(data = haierZhengzhouTable, ~longitude, ~latitude, 
+             popup = paste0("<strong>名称: </strong>", 
+                            haierZhengzhouTable$name, 
+                            "<br><strong>", 
+                            "生活指数", 
+                            ": </strong>", 
+                            haierZhengzhouTable$score.life,
+                            "<br><strong>", 
+                            "交通指数", 
+                            ": </strong>",
+                            haierZhengzhouTable$score.traffic, 
+                            "<br><strong>",
+                            "商业指数: </strong>", 
+                            haierZhengzhouTable$score.business, 
+                            "<br><strong>",
+                            "发展指数: </strong>", 
+                            haierZhengzhouTable$score.development, 
+                            "<br><strong>",
+                            "均值: </strong>", 
+                            haierZhengzhouTable$score.final
+             ),
+             icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png", iconWidth = 20, iconHeight =32),
+             group = '海尔专卖店')
+
+
+
+```
+
+
+
+
+# Haier Shanghai
+```{r}
+mart <- pm[1] * haierShanghaiTable$mart_5000 + pm[2] * haierShanghaiTable$mart_1000 + pm[3] * haierShanghaiTable$mart_500
+bus <- haierShanghaiTable$bus_500
+shop <- ps[1] * haierShanghaiTable$shop_5000 + ps[2] * haierShanghaiTable$shop_1000 + ps[3] * haierShanghaiTable$shop_500
+bank <- pb[1] * haierShanghaiTable$bank_5000 + pb[2] * haierShanghaiTable$bank_1000 + pb[3] * haierShanghaiTable$bank_500
+resid <- pr[1] * haierShanghaiTable$resid_5000 + pr[2] * haierShanghaiTable$resid_1000 + pr[3] * haierShanghaiTable$resid_500
+parking <- pp * haierShanghaiTable$parking_500
+competition <- ((haierShanghaiTable$gome_1000 + haierShanghaiTable$gome_500 + haierShanghaiTable$suning_500 + haierShanghaiTable$suning_1000)*3 + (haierShanghaiTable$gree_500 + haierShanghaiTable$gree_1000)*2)/16
+
+mart <- rescale(mart, to = c(60, 100))
+bus <- rescale(bus, to = c(60, 100))
+shop <- rescale(shop, to = c(60, 100))
+bank <- rescale(bank, to = c(60, 100))
+resid <- rescale(resid, to = c(60, 100))
+parking <- rescale(parking, to = c(60, 100))
+competition <- rescale(competition, to = c(60, 100))
+
+life <- 0.6 * mart + 0.1 * bank + 0.3 * resid
+traffic <- 0.5 * bus + 0.5 * parking
+business <- 0.8 * mart + 0.2 * shop
+development <- 0 * bank + 0.9 * mart + 0.1 * resid
+# competition
+final.score <- 0.25 * life + 0.25 * traffic + 0.25 * business + 0.15 * development + 0.1 * competition
+df <- data.frame(life, traffic, business, development, competition, final.score)
+
+par(mfrow = c(3,2))
+hist(life)
+hist(traffic)
+hist(business)
+hist(development)
+hist(competition)
+hist(final.score)
+
+haierShanghaiTable <- data.frame(haierShanghaiTable, round(data.frame(score.life = life, score.traffic = traffic, score.business = business, score.development = development, score.competition = competition, score.final = final.score),0))
+save(haierShanghaiTable, file = "data/haier_shanghai_score.RData")
+```
+
+
+
+
+
+
+
+
+

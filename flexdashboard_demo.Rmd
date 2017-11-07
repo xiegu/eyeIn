@@ -1,0 +1,140 @@
+---
+title: "eyeIn"
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(leaflet)
+library(leafletCN)
+library(DT)
+
+load("haier_zhengzhou_demo.RData")
+
+```
+
+Row {data-height=600}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = zzDistrictMap$value)
+
+pop1 <- paste0("<strong>区域: </strong>", 
+               zzDistrictMap$name, 
+               "<br><strong>", 
+               "人口密度(人数/平方千米)", 
+               ": </strong>", 
+               zzDistrictMap$value
+)
+
+
+a_popup <- paste0("<strong>名称: </strong>", 
+                  zzDistrictMap$name, 
+                  "<br><strong>", 
+                  "电话", 
+                  ": </strong>", 
+                  zzDistrictMap$telephone,
+                  "<br><strong>", 
+                  "地址", 
+                  ": </strong>",
+                  zzDistrictMap$address
+)
+
+
+leaflet(zzDistrictMap)%>%amap(group = '高德地图')%>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "黑底地图") %>%   
+  addProviderTiles(providers$Stamen.TonerLite, group = "白底地图") %>%
+  addMiniMap()%>%
+  addPolygons(stroke = TRUE,
+              smoothFactor = 1,
+              fillOpacity = 0.7,
+              weight = 1,
+              color = ~pal(value),
+              popup = pop1,
+              group = '行政区'
+  )%>%
+  addMarkers(data = haierZhengzhouTable, ~longitude, ~latitude, 
+             popup = paste0("<strong>名称: </strong>", 
+                            haierZhengzhouTable$name, 
+                            "<br><strong>", 
+                            "电话", 
+                            ": </strong>", 
+                            haierZhengzhouTable$telephone,
+                            "<br><strong>", 
+                            "地址", 
+                            ": </strong>",
+                            haierZhengzhouTable$address
+             ),
+             icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png", iconWidth = 20, iconHeight =32),
+             group = '海尔专卖店',
+             clusterOptions = markerClusterOptions())%>%
+  addMarkers(data = greeZhengzhou, ~longitude, ~latitude, 
+             popup = paste0("<strong>名称: </strong>", 
+                            greeZhengzhou$name, 
+                            "<br><strong>", 
+                            "电话", 
+                            ": </strong>", 
+                            greeZhengzhou$telephone,
+                            "<br><strong>", 
+                            "地址", 
+                            ": </strong>",
+                            greeZhengzhou$address
+             ),
+             icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png", iconWidth = 20, iconHeight =32),
+             group = '格力专卖店',
+             clusterOptions = markerClusterOptions())%>%
+  addMarkers(data = mideaZhengzhou, ~longitude, ~latitude,
+             popup = paste0("<strong>名称: </strong>", 
+                            mideaZhengzhou$name, 
+                            "<br><strong>", 
+                            "电话", 
+                            ": </strong>", 
+                            mideaZhengzhou$telephone,
+                            "<br><strong>", 
+                            "地址", 
+                            ": </strong>",
+                            mideaZhengzhou$address
+             ),
+             icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png", iconWidth = 20, iconHeight =32),
+             group = '美的专卖店',
+             clusterOptions = markerClusterOptions())%>%
+  addLayersControl( 
+    baseGroups = c("高德", "黑底地图", "白底地图"),                     
+    overlayGroups = c("行政区","海尔专卖店", "格力专卖店", "美的专卖店"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Haier
+
+```{r}
+datatable(haierZhengzhouTable, options = list(scrollX = TRUE))
+```
+
+Row
+-----------------------------------------------------------------------
+### Gree
+
+```{r}
+datatable(greeZhengzhou)
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Midea
+
+```{r}
+datatable(mideaZhengzhou)
+```
+
