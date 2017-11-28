@@ -111,6 +111,63 @@ mideaCompMap <- function(level = 'province'){
   
 }
 
+compRateMap <- function(level = 'province', competitor = 'gree'){
+  tmpData <- switch(level,
+                    province = list(midea = mideaProvDensity, gree = greeProvDensity),
+                    city = list(midea = mideaCityDensity, gree = greeCityDensity)
+                    )
+  compData <- switch(competitor,
+                    midea = tmpData$midea,
+                    gree = tmpData$gree
+                    )
+  haierData <- switch(level,
+                      province = haierProvDensity,
+                      city = haierCityDensity
+                      )
+  fullData <- switch(level,
+                     province = full_join(haierData, compData, by = c('province' = 'province')),
+                     city = full_join(haierData, compData, by = c('city' = 'city'))
+  )
+  colnames(fullData) <- switch(level,
+                               province = c('province', 'haier_no', 'comp_no'),
+                               city = c('city', 'haier_no', 'comp_no'))
+  fullData <- mutate(fullData, rate = ifelse(is.na(haier_no),NA, ifelse(is.na(comp_no), 99, round(haier_no/comp_no, 2))))%>%
+    select(-ends_with('no')) %>%
+    as.data.frame
+  map <- switch(level,
+                province = leafletGeo('china', fullData),
+                city = leafletGeo('city', fullData))
+  pal <- colorNumeric(
+    palette = "viridis",
+    domain = map$value)
+  leaflet(map) %>% amap(group = "高德")%>%
+    addProviderTiles(providers$CartoDB.DarkMatter, group = "黑底") %>%   
+    addProviderTiles(providers$Stamen.TonerLite, group = "白底") %>%
+    addPolygons(stroke = TRUE,
+                smoothFactor = 1,
+                fillOpacity = 0.7,
+                weight = 1,
+                color = ~pal(value),
+                popup = paste0("<strong>区域: </strong>", 
+                               map$name,
+                               "<br><strong>", 
+                               "优势系数", 
+                               ": </strong>", 
+                               map$value
+                )
+    ) %>%
+    addLegend("bottomright", pal = pal, values = ~value,
+              title = "优势系数",
+              labFormat = leaflet::labelFormat(prefix = ""),
+              opacity = 1)%>%
+    addLayersControl( 
+      baseGroups = c("高德", "黑底", "白底"),                     
+      options = layersControlOptions(collapsed = FALSE)
+    )
+}
+
+
+
 zzMap <- function(){
 pal <- colorNumeric(
   palette = "Blues",

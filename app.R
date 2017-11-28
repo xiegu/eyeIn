@@ -5,6 +5,7 @@ library(leaflet)
 library(leafletCN)
 library(dplyr)
 library(highcharter)
+library(lubridate)
 #library(readxl)
 library(DT)
 library(scales)
@@ -23,6 +24,8 @@ library(scales)
 load('data/data.RData')
 haierShanghaiTable <- haierShanghaiTable[-c(22,35), ]
 
+# warning! for 2017-11-13 reporting use
+finScoreDemo <- mutate(finScoreDemo, sales_date = sales_date + 365, y = year(sales_date), m = month(sales_date), ym = paste(y, m, sep ='-'))
 
 source("map.R", local = TRUE)
 
@@ -34,9 +37,9 @@ ui <- dashboardPage(skin = 'black',
                     dashboardSidebar(
                       sidebarMenu(
                         br(),
-                        menuItem("竞争品牌分析", tabName = "competitor", icon = icon("dashboard")),
-                        menuItem("信息中心指数分析", tabName = "placeScore", icon = icon("th")),
-                        menuItem("财务关联分析", tabName = "finScore" , icon = icon("th"))
+                        menuItem(h4("竞争品牌门店分析"), tabName = "competitor"),
+                        menuItem(h4("信息中心指数分析"), tabName = "placeScore"),
+                        menuItem(h4("财务关联分析"), tabName = "finScore")
                       )
                     ),
                     dashboardBody(
@@ -45,29 +48,69 @@ ui <- dashboardPage(skin = 'black',
                       ),
                       tabItems(
                         tabItem(tabName = "competitor",
+                                br(),
                                fluidRow(
+                               
                                  column(2, offset = 6,
-                                        selectInput("compBrand", label = "竞品",
+                                        selectInput("compBrand", label = NULL,
                                                      choices = c("格力" = 'gree', 
                                                                     "美的" = 'midea'
                                                                     )
                                                      )),
                                  column(2,
-                                        selectInput('compLevel', label = '层级', 
+                                        selectInput('compLevel', label = NULL, 
                                                     choices = c('省级' = 'province',
                                                                 '市级' = 'city'))
                                         )
                                ), 
                                br(),
                                fluidRow(
-                                 column(6,
-                                        leafletOutput('haierCompMap')
+                                 tags$style(".nav-tabs {
+                                            background-color: black;
+                                            }
+                                            
+                                            .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                                            background-color: transparent;
+                                            border-color: transparent;
+                                            color: #FFF
+                                            }
+                                            
+                                            .nav-tabs-custom .nav-tabs li.active {
+                                            border-top-color: #FFF;
+                                            color: #FFF;
+                                            }
+                                            
+                                            .nav-tabs-custom .nav-tabs li.header {
+                                            color: #fff;
+                                            }
+                                            
+                                            .nav-tabs-custom .tab-content {
+                                            background: none repeat scroll 0% 0% black;
+                                            color: #fff;
+                                            padding: 10px;
+                                            border-bottom-right-radius: 3px;
+                                            border-bottom-left-radius: 3px;
+                                            }
+                                            "),
+                                 tabBox(title = "海尔门店分布",
+                                        width = 6,
+                                        tabPanel(title = h4('分布情况'),
+                                                 leafletOutput('haierCompMap')
                                         ),
-                                 column(6,
-                                        leafletOutput('compMap')
+                                        tabPanel(title = h4('优势对比'),
+                                                 leafletOutput('compRateMap')
+                                        )
+                                 ),
+                                 tabBox(title = '竞争品牌门店分布',
+                                        width = 6,
+                                        tabPanel(title = h4('分布情况'),
+                                                 leafletOutput('compMap')
+                                                 )
+                                        
                                         )
                                ),
                                br(),
+                               
                                fluidRow(
                                  valueBoxOutput('HaierProvCover', width = 2),
                                  valueBoxOutput('HaierCityCover', width = 2),
@@ -107,16 +150,16 @@ ui <- dashboardPage(skin = 'black',
                                             "),
                                  tabBox(title = "海尔门店数排名",
                                         width = 6,
-                                        tabPanel(title = '海尔',
+                                        tabPanel(title = h4('海尔'),
                                                  highchartOutput('shopNumHaier', height = '250px')
                                                  )
                                         ),
                                  tabBox(title = "竞品门店数排名",
                                         width = 6,
-                                        tabPanel(title = '格力',
+                                        tabPanel(title = h4('格力'),
                                                  highchartOutput('shopNumGree', height = '250px')
                                                  ),
-                                        tabPanel(title = '美的',
+                                        tabPanel(title = h4('美的'),
                                                  highchartOutput('shopNumMidea', height = '250px')
                                         )
                                  )
@@ -152,16 +195,16 @@ ui <- dashboardPage(skin = 'black',
                                             "),
                                  tabBox(title = "海尔门店密度排名",
                                         width = 6,
-                                        tabPanel(title = '海尔',
+                                        tabPanel(title = h4('海尔'),
                                                  highchartOutput('shopDensityHaier', height = '300px')
                                                  )
                                  ),
                                  tabBox(title = "竞品门店密度排名",
                                         width = 6,
-                                        tabPanel(title = '格力',
+                                        tabPanel(title = h4('格力'),
                                                  highchartOutput('shopDensityGree', height = '300px')
                                         ),
-                                        tabPanel(title = '美的',
+                                        tabPanel(title = h4('美的'),
                                                  highchartOutput('shopDensityMidea', height = '300px')
                                         )
                                  )
@@ -210,13 +253,13 @@ color: #fff;
 "),
                                  tabBox(title = "门店详细信息",
                                         width = 12,
-                                        tabPanel(title = 'Haier',
+                                        tabPanel(title = h4('海尔'),
                                                  dataTableOutput('haierTable')
                                         ),
-                                        tabPanel(title = 'Gree',
+                                        tabPanel(title = h4('格力'),
                                                  dataTableOutput('GreeTable')
                                         ),
-                                        tabPanel(title = 'Midea',
+                                        tabPanel(title = h4('美的'),
                                                  dataTableOutput('MideaTable')
                                         )
                                  )
@@ -262,15 +305,15 @@ color: #fff;
                                              "),
 
                           tabBox(width = 6, title = '发展指标', side = 'left',
-                                 tabPanel(title = '国内生产总值&年末总人口',
-                                          highchartOutput('cityDev1', height = '250px')
+                                 tabPanel(title = h4('国内生产总值&年末总人口'),
+                                          highchartOutput('cityDev1', height = '300px')
                                           ),
-                                 tabPanel(title = '平均工资&住宅均价',
-                                          highchartOutput('cityDev2', height = '250px')
+                                 tabPanel(title = h4('平均工资&住宅均价'),
+                                          highchartOutput('cityDev2', height = '300px')
                                           )
                               ),
                           box(width = 6, title = '城市人口密度', solidHeader = TRUE, background = 'black',
-                              highchartOutput('cityDensity',  height = '250px'))
+                              highchartOutput('cityDensity',  height = '300px'))
                         ),
                         br(),
                         fluidRow(
@@ -302,18 +345,18 @@ color: #fff;
                                      }
                                      "),
                             tabBox(title = '商圈细分', width = 6, side = 'left',
-                                   tabPanel(title = '指数雷达',
+                                   tabPanel(title = h4('指数雷达'),
                                 highchartOutput('scoreRadar', height = '350px')
                                    ),
-                                   tabPanel(title = '网格得分',
+                                   tabPanel(title = h4('网格得分'),
                                             dataTableOutput('networkScore')
                                             )
                             ),
                             tabBox(title = '指数排名', width = 6, side = 'left',
-                                   tabPanel(title = '指数得分靠前门店',
+                                   tabPanel(title = h4('指数得分高的门店'),
                                             highchartOutput('scoreBest', height = '350px')
                                    ),
-                                   tabPanel(title = '指数得分靠后门店',
+                                   tabPanel(title = h4('指数得分低的门店'),
                                             highchartOutput('scoreWorst', height = '350px'))
                             )
                           ),
@@ -489,6 +532,11 @@ server <- function(input, output) {
       return(NULL)
     }
   })
+  
+  output$compRateMap <- renderLeaflet({
+    compRateMap(level = input$compLevel, competitor = input$compBrand)
+  })
+  
   output$HaierProvCover <- renderValueBox({
       tmpTable <- haierProvDensity
       col <- 'aqua'
@@ -557,6 +605,7 @@ server <- function(input, output) {
     highchart()%>%
       hc_chart(type ='bar')%>%
       hc_xAxis(categories = tmpTable$name, labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = tmpTable$num, color = 'lightblue', name = '门店数')%>%
       hc_legend(enabled = FALSE)
   })
@@ -572,6 +621,7 @@ server <- function(input, output) {
     highchart()%>%
       hc_chart(type ='bar')%>%
       hc_xAxis(categories = tmpTable$name, labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = tmpTable$num, color = 'turquoise', name = '门店数')%>%
       hc_legend(enabled = FALSE)
   })
@@ -587,6 +637,7 @@ server <- function(input, output) {
     highchart()%>%
       hc_chart(type ='bar')%>%
       hc_xAxis(categories = tmpTable$name, labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = tmpTable$num, color = 'LightCoral', name = '门店数')%>%
       hc_legend(enabled = FALSE)
   })
@@ -604,6 +655,8 @@ server <- function(input, output) {
     highchart()%>%
       hc_tooltip(pointFormat = "<span style=\"color:black\">{point.name}每千万人拥有店家数</span>:
               {point.z:,.0f}<br/>") %>%
+      hc_xAxis(labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = tmpTable, type = 'scatter', hcaes(x= num, y =population, size = density, color = density), name = '门店密度')%>%
       hc_legend(enabled = FALSE)
   })
@@ -621,6 +674,8 @@ server <- function(input, output) {
     highchart()%>%
       hc_tooltip(pointFormat = "<span style=\"color:black\">{point.name}每千万人拥有门店数</span>:
               {point.z:,.0f}<br/>") %>%
+      hc_xAxis(labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = tmpTable, type = 'scatter', hcaes(x= num, y =population, size = density, color = density), name = '门店密度')%>%
       hc_legend(enabled = FALSE)
   })
@@ -638,6 +693,8 @@ server <- function(input, output) {
       highchart()%>%
         hc_tooltip(pointFormat = "<span style=\"color:black\">{point.name}每千万人拥有店家数</span>:
               {point.z:,.0f}<br/>") %>%
+        hc_xAxis(labels = list(style = list(color = 'white')))%>%
+        hc_yAxis(labels = list(style = list(color = 'white')))%>%
         hc_add_series(data = tmpTable, type = 'scatter', hcaes(x= num, y =population, size = density, color = density), name = '门店密度')%>%
         hc_legend(enabled = FALSE)
         })
@@ -1006,10 +1063,11 @@ server <- function(input, output) {
     }
     valueBox(
       subtitle = paste(tmpTable$city, '国内生产总值', sep = ''),
-      value = div(h4(prettyNum(tmpTable$cityGDP, big.mark = ',')),
-                  p('同比增长 ', percent(tmpTable$cityGDPrRt), ', ', '近五年平均增长 ', percent(tmpTable$cityGDPArt))
+      value = div(h3(prettyNum(tmpTable$cityGDP, big.mark = ',')),
+                  p('同比增长 ', percent(tmpTable$cityGDPrRt)),
+                  p('近五年平均增长 ', percent(tmpTable$cityGDPArt))
                   ),
-      color = 'teal',
+      color = 'blue',
       icon = icon('area-chart')
     )
   })
@@ -1022,10 +1080,11 @@ server <- function(input, output) {
     }
     valueBox(
       subtitle = paste(tmpTable$city, '人口', sep = ''),
-      value = div(h4(prettyNum(tmpTable$cityPop, big.mark = ',')),
-                  p('同比增长 ', percent(tmpTable$cityPoprRt),  ', ', '近五年平均增长 ', percent(tmpTable$cityPopArt))
+      value = div(h3(prettyNum(tmpTable$cityPop, big.mark = ',')),
+                  p('同比增长 ', percent(tmpTable$cityPoprRt)),  
+                  p('近五年平均增长 ', percent(tmpTable$cityPopArt))
                   ),
-      color = 'teal',
+      color = 'blue',
       icon = icon('users')
     )
   })
@@ -1038,9 +1097,10 @@ server <- function(input, output) {
     }
     valueBox(
       subtitle = paste(tmpTable$city, '住宅商品房均价', sep = ''),
-      value = div(h4(prettyNum(tmpTable$cityPprice, big.mark = ',')), 
-                  p('同比增长 ', percent(tmpTable$cityPpricerRt), ', ', '近五年平均增长 ', percent(tmpTable$cityPpriceArt))),
-      color = 'teal',
+      value = div(h3(prettyNum(tmpTable$cityPprice, big.mark = ',')), 
+                  p('同比增长 ', percent(tmpTable$cityPpricerRt)),
+                  p('近五年平均增长 ', percent(tmpTable$cityPpriceArt))),
+      color = 'blue',
       icon = icon('building')
     )
   })
@@ -1053,10 +1113,11 @@ server <- function(input, output) {
     }
     valueBox(
       subtitle = paste(tmpTable$city, '职工平均工资', sep = ''),
-      value = div(h4(prettyNum(tmpTable$citySalary, big.mark = ',')),
-                  p('同比增长 ', percent(tmpTable$citySalaryrRt), ', ', '近五年平均增长 ', percent(tmpTable$citySalaryArt))
+      value = div(h3(prettyNum(tmpTable$citySalary, big.mark = ',')),
+                  p('同比增长 ', percent(tmpTable$citySalaryrRt)), 
+                  p('近五年平均增长 ', percent(tmpTable$citySalaryArt))
                   ),
-      color = 'teal',
+      color = 'blue',
       icon = icon('money')
     )
   })
@@ -1103,12 +1164,12 @@ server <- function(input, output) {
     }else{
       tmpTable <- select(haierZhengzhouTable, city, shopCode, name, score.final)%>%unique
     }
-    set.seed(100)
     tmpTable$score <- tmpTable$score.final 
     tmpTable <- arrange(tmpTable, desc(score))%>%top_n(10)
     highchart()%>%
       hc_chart(type ='bar')%>%
       hc_xAxis(categories = tmpTable$name, labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = round(as.numeric(tmpTable$score), 2), color = 'turquoise', name = 'Place score')%>%
       hc_legend(enabled = FALSE)
   })
@@ -1119,12 +1180,12 @@ server <- function(input, output) {
     }else{
       tmpTable <- select(haierZhengzhouTable, city, shopCode, name, score.final)%>%unique
     }
-    set.seed(100)
     tmpTable$score <- tmpTable$score.final 
     tmpTable <- arrange(tmpTable, score)%>%top_n(-10)
     highchart()%>%
       hc_chart(type ='bar')%>%
       hc_xAxis(categories = tmpTable$name, labels = list(style = list(color = 'white')))%>%
+      hc_yAxis(labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = round(as.numeric(tmpTable$score), 2), color = 'LightCoral', name = 'Place score')%>%
       hc_legend(enabled = FALSE)
   })
@@ -1135,13 +1196,13 @@ server <- function(input, output) {
     highchart()%>%
       hc_chart(type = 'line')%>%
       hc_yAxis_multiples(
-        list(lineWidth = 1, title = list(text = '')),
-        list(lineWidth = 1, title = list(text = ''), opposite = TRUE)
+        list(lineWidth = 1, title = list(text = ''), labels = list(style = list(color = 'white'))),
+        list(lineWidth = 1, title = list(text = ''), labels = list(style = list(color = 'white')), opposite = TRUE)
       )%>%
       hc_tooltip(pointFormat = "<span style=\"color:{series.color}\">{series.name}</span>:
               {point.y:,.2f}<br/>",
                  shared = TRUE) %>% 
-      hc_xAxis(categories = rev(colnames(GDPTable)[-1])) %>%
+      hc_xAxis(categories = rev(colnames(GDPTable)[-1]), labels = list(style = list(color = 'white'))) %>%
       hc_add_series(data = as.numeric(select(GDPTable, rev(colnames(GDPTable)[-1]))), color = 'LightCoral', name = 'GDP', yAxis = 1)%>%
       hc_add_series(data = as.numeric(select(PopTable, rev(colnames(PopTable)[-1]))), color = 'turquoise', name = '人口') %>%
       hc_legend(itemStyle = list(color = 'white'))
@@ -1152,13 +1213,13 @@ server <- function(input, output) {
     PropertyPriceTable <- subset(PropertyPrice_topCity_China, city == input$scoreCity)
     highchart()%>%
       hc_yAxis_multiples(
-        list(lineWidth = 1, title = list(text = '')),
-        list(lineWidth = 1, title = list(text = ''), opposite = TRUE)
+        list(lineWidth = 1, title = list(text = ''), labels = list(style = list(color = 'white'))),
+        list(lineWidth = 1, title = list(text = ''), labels = list(style = list(color = 'white')), opposite = TRUE)
       )%>%
       hc_tooltip(pointFormat = "<span style=\"color:{series.color}\">{series.name}</span>:
               {point.y:,.0f}<br/>",
                  shared = TRUE) %>% 
-      hc_xAxis(categories = rev(colnames(SalaryTable)[-1])) %>%
+      hc_xAxis(categories = rev(colnames(SalaryTable)[-1]), labels = list(style = list(color = 'white'))) %>%
       hc_add_series(data = as.numeric(select(SalaryTable, rev(colnames(SalaryTable)[-1]))), color = 'LightCoral', name = '平均工资', yAxis = 1)%>%
       hc_add_series(data = as.numeric(select(PropertyPriceTable, rev(colnames(PropertyPriceTable)[-1]))), color = 'SteelBlue', name = '住宅均价') %>%
       hc_legend(itemStyle = list(color = 'white'))
@@ -1244,10 +1305,10 @@ server <- function(input, output) {
     
     highchart()%>%
       #hc_chart(type = 'column') %>%
-      hc_xAxis(categories = table1$ym) %>%
+      hc_xAxis(categories = table1$ym, labels = list(style = list(color = 'white'))) %>%
       hc_yAxis_multiples(
-        list(lineWidth = 1, title = list(text = '客流量')),
-        list(opposite = TRUE, title = list(text = '收入'))
+        list(lineWidth = 1, title = list(text = '客流量'), labels = list(style = list(color = 'white'))),
+        list(opposite = TRUE, title = list(text = '收入'), labels = list(style = list(color = 'white')))
       )%>%
       hc_add_series(data = filter(table1, name == '河南清河工贸CBD店')$ym_revenue, type = 'column',  yAxis = 1, color = 'turquoise', name = '河南清河工贸CBD店-收入')%>%
       hc_add_series(data = filter(table1, name == '郑州锐达CBD店')$ym_revenue, type = 'column',  yAxis = 1, color = 'LightCoral', name = '郑州锐达CBD店-收入')%>%
@@ -1265,17 +1326,23 @@ server <- function(input, output) {
     }else{
       salesTable <- subset(haier_zhengzhou_d_sales, name == input$scoreShop2)
     }
+    
+    #waring! for 2017-11-13 reporting use
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      salesTable <- mutate(salesTable, sales_date = sales_date + 365)
+    }else{
+      salesTable <- salesTable}
     highchart()%>%
       hc_title(text = paste(input$scoreCity2, input$scoreDistrict2, input$scoreShop2, sep = ' - '),
                style = list(color = '#FFF'))%>%
       hc_yAxis_multiples(
-          list(lineWidth = 1, title = list(text = '销量')),
-          list(opposite = TRUE, title = list(text = '收入'))
+          list(lineWidth = 1, title = list(text = '销量'), labels = list(style = list(color = 'white'))),
+          list(opposite = TRUE, title = list(text = '收入'), labels = list(style = list(color = 'white')))
       )%>%
       hc_tooltip(pointFormat = "<span style=\"color:{series.color}\">{series.name}</span>:
               {point.y:,.0f}<br/>",
                  shared = TRUE) %>% 
-      hc_xAxis(categories = salesTable$sales_date)%>%
+      hc_xAxis(categories = salesTable$sales_date, labels = list(style = list(color = 'white')))%>%
       hc_add_series(data = as.numeric(salesTable$revenue), type = 'line', color = 'LightCoral', name = '收入', yAxis = 1)%>%
       hc_add_series(data = as.integer(salesTable$quantity), type ='column', color = 'turquoise', name = '销量')
   })
@@ -1287,6 +1354,9 @@ server <- function(input, output) {
       tmpTable <- subset(haierZhengzhouTable, district == input$scoreDistrict2 & name == input$scoreShop2)
     }else{
       tmpTable <- NULL
+    }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
     }
     col <- 'black'
     valueBox(value = prettyNum(tmpTable$ly_revenue, big.mark = ','), subtitle = '最近一年收入', color = col)
@@ -1300,6 +1370,9 @@ server <- function(input, output) {
     }else{
       tmpTable <- NULL
     }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
+    }
     col <- 'black'
     valueBox(value = prettyNum(tmpTable$hy_revenue, big.mark = ','), subtitle = '最近半年收入', color = col)
   })
@@ -1311,6 +1384,9 @@ server <- function(input, output) {
       tmpTable <- subset(haierZhengzhouTable, district == input$scoreDistrict2 & name == input$scoreShop2)
     }else{
       tmpTable <- NULL
+    }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
     }
     col <- 'red'
     valueBox(value = prettyNum(tmpTable$lm_revenue, big.mark = ','), subtitle = '最近一个月收入', color = col)
@@ -1324,6 +1400,9 @@ server <- function(input, output) {
     }else{
       tmpTable <- NULL
     }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
+    }
     col <- 'red'
     valueBox(value = prettyNum(tmpTable$lw_revenue, big.mark = ','), subtitle = '最近一周收入', color = col)
   })
@@ -1335,6 +1414,9 @@ server <- function(input, output) {
       tmpTable <- subset(haierZhengzhouTable, district == input$scoreDistrict2 & name == input$scoreShop2)
     }else{
       tmpTable <- NULL
+    }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
     }
     col <- 'black'
     valueBox(value = prettyNum(tmpTable$ly_quantity, big.mark = ','), subtitle = '最近一年销量', color = col)
@@ -1348,6 +1430,9 @@ server <- function(input, output) {
     }else{
       tmpTable <- NULL
     }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
+    }
     col <- 'black'
     valueBox(value = prettyNum(tmpTable$hy_quantity, big.mark = ','), subtitle = '最近半年销量', color = col)
   })
@@ -1360,6 +1445,9 @@ server <- function(input, output) {
     }else{
       tmpTable <- NULL
     }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
+      }
     col <- 'red'
     valueBox(value = prettyNum(tmpTable$lm_quantity, big.mark = ','), subtitle = '最近一个月销量', color = col)
   })
@@ -1371,6 +1459,9 @@ server <- function(input, output) {
       tmpTable <- subset(haierZhengzhouTable, district == input$scoreDistrict2 & name == input$scoreShop2)
     }else{
       tmpTable <- NULL
+    }
+    if(input$scoreShop2 %in% c('郑州丹尼斯人民路锐达店', '郑州锐达CBD店', '河南清河工贸CBD店')){
+      tmpTable <- filter(haier_zhengzhou_sales_com, name == input$scoreShop2)
     }
     col <- 'red'
     valueBox(value = prettyNum(tmpTable$lw_quantity, big.mark = ','), subtitle = '最近一周销量', color = col)
