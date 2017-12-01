@@ -5,9 +5,9 @@ account: xiegu
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 201669
-bundleId: 1093713
+bundleId: 1107993
 url: https://xiegu.shinyapps.io/eyein/
-when: 1511510221.55639
+when: 1512109859.41131
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: flexdashboard_demo.html|flexdashboard_demo.Rmd|score_calculator.R|score.html|score.rmd|www/logo.png
