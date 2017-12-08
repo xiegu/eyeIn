@@ -20,6 +20,7 @@ library(scales)
 # load("data/haier_zhengzhou_score.RData")
 # load("data/competitor_demo.RData")
 
+source('util.R', local = TRUE)
 load('data/data.RData')
 haierShanghaiTable <- haierShanghaiTable[-c(22, 35),]
 
@@ -35,568 +36,601 @@ finScoreDemo <-
 
 source("map.R", local = TRUE)
 
-#dbHeader <- dashboardHeader()
-#dbHeader$children[[2]]$children <- tags$div('猫头鹰 ', tags$img(src = 'logo.png', height = '42'))
-
 ui <- dashboardPage(
   skin = 'black',
   dashboardHeader(title = '猫头鹰'),
-  dashboardSidebar(sidebarMenu(
-    br(),
-    menuItem(h4("竞争品牌门店分析"), tabName = "competitor"),
-    menuItem(h4("信息中心指数分析"), tabName = "placeScore"),
-    menuItem(h4("财务关联分析"), tabName = "finScore"),
-    menuItem(h4("门店客户画像"), tabName = 'userProfile')
-  )),
+  dashboardSidebar(sidebarMenuOutput('SidebarMenuUI')),
   dashboardBody(
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
     ),
-    tabItems(
-      tabItem(
-        tabName = "competitor",
-        br(),
-        fluidRow(column(
-          2, offset = 6,
-          selectInput(
-            "compBrand",
-            label = NULL,
-            choices = c("格力" = 'gree',
-                        "美的" = 'midea')
-          )
-        ),
-        column(
-          2,
-          selectInput(
-            'compLevel',
-            label = NULL,
-            choices = c('省级' = 'province',
-                        '市级' = 'city')
-          )
-        )),
-        br(),
-        fluidRow(
-          tags$style(
-            ".nav-tabs {
-            background-color: black;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-            background-color: transparent;
-            border-color: transparent;
-            color: #FFF
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active {
-            border-top-color: #FFF;
-            color: #FFF;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.header {
-            color: #fff;
-            }
-            
-            .nav-tabs-custom .tab-content {
-            background: none repeat scroll 0% 0% black;
-            color: #fff;
-            padding: 10px;
-            border-bottom-right-radius: 3px;
-            border-bottom-left-radius: 3px;
-            }
-            "
-          ),
-          tabBox(
-            title = "海尔门店分布",
-            width = 6,
-            tabPanel(title = h4('分布情况'),
-                     leafletOutput('haierCompMap')),
-            tabPanel(title = h4('优势对比'),
-                     leafletOutput('compRateMap'))
-          ),
-          tabBox(
-            title = '竞争品牌门店分布',
-            width = 6,
-            tabPanel(title = h4('分布情况'),
-                     leafletOutput('compMap'))
-            
-          )
-          ),
-        br(),
-        
-        fluidRow(
-          valueBoxOutput('HaierProvCover', width = 2),
-          valueBoxOutput('HaierCityCover', width = 2),
-          valueBoxOutput('HaierShopCover', width = 2),
-          valueBoxOutput('CompProvCover', width = 2),
-          valueBoxOutput('CompCityCover', width = 2),
-          valueBoxOutput('CompShopCover', width = 2)
-        ),
-        br(),
-        fluidRow(
-          tags$style(
-            ".nav-tabs {
-            background-color: black;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-            background-color: transparent;
-            border-color: transparent;
-            color: #FFF
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active {
-            border-top-color: #FFF;
-            color: #FFF;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.header {
-            color: #fff;
-            }
-            
-            .nav-tabs-custom .tab-content {
-            background: none repeat scroll 0% 0% black;
-            color: #fff;
-            padding: 10px;
-            border-bottom-right-radius: 3px;
-            border-bottom-left-radius: 3px;
-            }
-            "
-          ),
-          tabBox(
-            title = "海尔门店数排名",
-            width = 6,
-            tabPanel(
-              title = h4('海尔'),
-              highchartOutput('shopNumHaier', height = '250px')
-            )
-          ),
-          tabBox(
-            title = "竞品门店数排名",
-            width = 6,
-            tabPanel(title = h4('格力'),
-                     highchartOutput('shopNumGree', height = '250px')),
-            tabPanel(
-              title = h4('美的'),
-              highchartOutput('shopNumMidea', height = '250px')
-            )
-          )
-          ),
-        br(),
-        fluidRow(
-          tags$style(
-            ".nav-tabs {
-            background-color: black;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-            background-color: transparent;
-            border-color: transparent;
-            color: #FFF
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active {
-            border-top-color: #FFF;
-            color: #FFF;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.header {
-            color: #fff;
-            }
-            
-            .nav-tabs-custom .tab-content {
-            background: none repeat scroll 0% 0% black;
-            color: #fff;
-            padding: 10px;
-            border-bottom-right-radius: 3px;
-            border-bottom-left-radius: 3px;
-            }
-            "
-          ),
-          tabBox(
-            title = "海尔门店密度排名",
-            width = 6,
-            tabPanel(
-              title = h4('海尔'),
-              highchartOutput('shopDensityHaier', height = '300px')
-            )
-          ),
-          tabBox(
-            title = "竞品门店密度排名",
-            width = 6,
-            tabPanel(
-              title = h4('格力'),
-              highchartOutput('shopDensityGree', height = '300px')
-            ),
-            tabPanel(
-              title = h4('美的'),
-              highchartOutput('shopDensityMidea', height = '300px')
-            )
-          )
-          
-          ),
-        hr(),
-        fluidRow(column(
-          2,
-          selectInput('mapCity', '城市', choices = c('上海', '郑州'))
-        )),
-        br(),
-        fluidRow(
-          tags$style("
-                     .marker-cluster-small {
-          	background-color:  rgba(173, 216, 230, 0.6);
-            }
-
-            .marker-cluster-small div {
-          	background-color:  rgba(30,144, 255, 0.6);
-            }
-
-            .marker-cluster-medium {
-          	background-color:  rgba(84, 255, 159, 0.6);
-            }
-
-            .marker-cluster-medium div {
-          	background-color:  rgba(102, 205, 0, 0.6);
-            }
-
-            .marker-cluster-large{
-          	background-color:  rgba(205, 91, 69, 0.6);
-            }
-
-            .marker-cluster-large div {
-          	background-color:  rgba(238, 64, 0, 0.6);
-            }
-            "),
-          column(12,
-                        leafletOutput('mapAll', height = 600))),
-        br(),
-        fluidRow(
-          tags$style(
-            ".nav-tabs {
-            background-color: black;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-            background-color: transparent;
-            border-color: transparent;
-            color: #FFF
-            }
-            
-            .nav-tabs-custom .nav-tabs li.active {
-            border-top-color: #FFF;
-            color: #FFF;
-            }
-            
-            .nav-tabs-custom .nav-tabs li.header {
-            color: #fff;
-            }
-            
-            .nav-tabs-custom .tab-content {
-            background: none repeat scroll 0% 0% black;
-            color: #fff;
-            padding: 10px;
-            border-bottom-right-radius: 3px;
-            border-bottom-left-radius: 3px;
-            }
-            "),
-          tabBox(
-            title = "门店详细信息",
-            width = 12,
-            tabPanel(title = h4('海尔'),
-                     dataTableOutput('haierTable')),
-            tabPanel(title = h4('格力'),
-                     dataTableOutput('GreeTable')),
-            tabPanel(title = h4('美的'),
-                     dataTableOutput('MideaTable'))
-          )
-          )
-    ),
-    
-    tabItem(
-      tabName = 'placeScore',
-      fluidRow(
-        valueBoxOutput('cityGDP', width = 3),
-        valueBoxOutput('cityPop', width = 3),
-        valueBoxOutput('cityPprice', width = 3),
-        valueBoxOutput('citySalary', width = 3)
-        
-      ),
-      br(),
-      fluidRow(
-        tags$style(
-          ".nav-tabs {
-          background-color: black;
-          }
-          
-          .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-          background-color: transparent;
-          border-color: transparent;
-          color: #FFF
-          }
-          
-          .nav-tabs-custom .nav-tabs li.active {
-          border-top-color: #FFF;
-          color: #FFF;
-          }
-          
-          .nav-tabs-custom .nav-tabs li.header {
-          color: #FFF;
-          }
-          
-          .nav-tabs-custom .tab-content {
-          background: none repeat scroll 0% 0% black;
-          color: #fff;
-          padding: 10px;
-          border-bottom-right-radius: 3px;
-          border-bottom-left-radius: 3px;
-          }
-          "
-        ),
-        
-        tabBox(
-          width = 6,
-          title = '发展指标',
-          side = 'left',
-          tabPanel(
-            title = h4('国内生产总值&年末总人口'),
-            highchartOutput('cityDev1', height = '300px')
-          ),
-          tabPanel(
-            title = h4('平均工资&住宅均价'),
-            highchartOutput('cityDev2', height = '300px')
-          )
-        ),
-        box(
-          width = 6,
-          title = '城市人口密度',
-          solidHeader = TRUE,
-          background = 'black',
-          highchartOutput('cityDensity',  height = '300px')
-        )
-        ),
-      br(),
-      fluidRow(
-        tags$style(
-          ".nav-tabs {
-          background-color: black;
-          }
-          
-          .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-          background-color: transparent;
-          border-color: transparent;
-          color: #FFF
-          }
-          
-          .nav-tabs-custom .nav-tabs li.active {
-          border-top-color: #FFF;
-          color: #FFF;
-          }
-          
-          .nav-tabs-custom .nav-tabs li.header {
-          color: #FFF;
-          }
-          
-          .nav-tabs-custom .tab-content {
-          background: none repeat scroll 0% 0% black;
-          color: #fff;
-          padding: 10px;
-          border-bottom-right-radius: 3px;
-          border-bottom-left-radius: 3px;
-          }
-          "
-        ),
-        tabBox(
-          title = '商圈细分',
-          width = 6,
-          side = 'left',
-          tabPanel(title = h4('网格得分'),
-                   dataTableOutput('networkScore')),
-          tabPanel(
-            title = h4('指数雷达'),
-            highchartOutput('scoreRadar', height = '350px')
-          )
-        ),
-        box(
-          title = '信息指数排名',
-          width = 6,
-          solid = TRUE,
-          background = 'black',
-          highchartOutput('scoreBestWorst', height = '600px')
-        )
-        
-        ),
-      br(),
-      fluidRow(
-        column(2,
-               selectInput(
-                 'scoreCity',
-                 'City',
-                 choices = c('上海', '郑州'),
-                 selected = '郑州'
-               )),
-        column(2,
-               uiOutput('scoreDistrict')
-        ),
-               column(4,
-                      uiOutput('scoreShop')
-               )
-        ),
-               br(),
-               fluidRow(
-                 tags$style(
-                   ".nav-tabs {
-                   background-color: black;
-                   }
-                   
-                   .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
-                   background-color: transparent;
-                   border-color: transparent;
-                   color: #FFF
-                   }
-                   
-                   .nav-tabs-custom .nav-tabs li.active {
-                   border-top-color: #FFF;
-                   color: #FFF;
-                   }
-                   
-                   .nav-tabs-custom .nav-tabs li.header {
-                   color: #FFF;
-                   }
-                   
-                   .nav-tabs-custom .tab-content {
-                   background: none repeat scroll 0% 0% black;
-                   color: #fff;
-                   padding: 10px;
-                   border-bottom-right-radius: 3px;
-                   border-bottom-left-radius: 3px;
-                   }
-                   "
-                 ),
-                 uiOutput('scoreBox')
-                 
-                 ),
-               fluidRow(
-                 useShinyjs(),
-                 tags$style("
-                            #scoreWiki {
-                            color: #FFF
-                            }
-                            "),
-                 column(
-                   width = 4,
-                   actionButton("btn1", "如何计算信息中心指数？"),
-                   br(),
-                   div(
-                     id = 'scoreWiki',
-                     '根据每家店的店面定位位置，抓取周围特定距离内的POI信息。
-                     抓取的范围包括生活信息（小区、超市、银行等）、交通信息（公交站、停车场等）、商业信息（超市、商场等）、发展信息（小区等）和竞争信息（竞争对店铺位置）。
-                     信息中心指数根据上述的五个维度的信息指数再加权平均计算得出。'
-                   )
-                   )
-                 ),
-               br(),
-               fluidRow(
-                 box(
-                   width = 12,
-                   title = '信息点地图',
-                   solidHeader = TRUE,
-                   background = "black",
-                   leafletOutput('mapPlace', height = 600)
-                 )
-               )
-               ),
-        tabItem(
-          tabName = 'finScore',
-          fluidRow(
-            column(2,
-                   selectInput(
-                     'scoreCity3',
-                     '城市',
-                     choices = c('上海', '郑州'),
-                     selected = '郑州'
-                   )),
-            column(2,
-                   uiOutput('scoreDistrict3')),
-            column(4,
-                   uiOutput('scoreShop3'))
-          ),
-          fluidRow(uiOutput('comparisonScore')),
-          fluidRow(
-            useShinyjs(),
-            tags$style("
-                       #densityWiki {
-                       color: #FFF
-                       }
-                       "),
-            column(
-              width = 4,
-              actionButton("btn2", "如何计算门店客流量？"),
-              br(),
-              div(
-                id = 'densityWiki',
-                '门店客流量计算主要依托百度大数据，以每月为基准，根据门店周围半径50米内，抓取停留时间超过15分钟的客流量。百度抓取的客流量与实际客流量存在一定的转化比例。'
-              )
-            )
-            ),
-          br(),
-          fluidRow(
-            box(
-              width = 6,
-              title = '多店关联对比-收入',
-              solid = TRUE,
-              background = 'black',
-              
-              highchartOutput('revCompChart', height = '300px')
-            ),
-            box(
-              width = 6,
-              title = '多店关联对比-客流量',
-              solid = TRUE,
-              background = 'black',
-              highchartOutput('trafficCompChart', height = '300px')
-            )
-          ),
-          hr(),
-          fluidRow(
-            column(2,
-                   selectInput('scoreCity2', '城市', choices = c('上海', '郑州'))),
-            column(2,
-                   uiOutput('scoreDistrict2')
-                   ),
-                   column(4,
-                          uiOutput('scoreShop2')
-                   )
-            ),
-                   
-                   # fluidRow(
-                   #   box(width = 12, title = '收入销量趋势', solid = TRUE, background = 'black',
-                   #
-                   #            highchartOutput('revChart')
-                   #          )
-                   # ),
-                   fluidRow(
-                     valueBoxOutput('lyRevenue', width = 3),
-                     valueBoxOutput('hyRevenue', width = 3),
-                     valueBoxOutput('lmRevenue', width = 3),
-                     valueBoxOutput('lwRevenue', width = 3)
-                   ),
-                   fluidRow(
-                     valueBoxOutput('lyQuantity', width = 3),
-                     valueBoxOutput('hyQuantity', width = 3),
-                     valueBoxOutput('lmQuantity', width = 3),
-                     valueBoxOutput('lwQuantity', width = 3)
-                   )
-            ),
-    tabItem(tabName = 'userProfile')
-          
-        )
+    uiOutput('Body')
       )
   )
     
                
       
       server <- function(input, output) {
+        
+        # sidebar menu code
+        output$SidebarMenuUI <- renderMenu({
+          if(user_input$authenticated == FALSE){
+            sidebarMenu()
+          }else{
+            sidebarMenu(
+              br(),
+              menuItem(h4("竞争品牌门店分析"), tabName = "competitor"),
+              menuItem(h4("信息中心指数分析"), tabName = "placeScore"),
+              menuItem(h4("财务关联分析"), tabName = "finScore"),
+              menuItem(h4("门店客户画像"), tabName = 'userProfile')
+            )
+          }
+        })
+        
+        # body code
+        output$Body <- renderUI({
+          if (user_input$authenticated == FALSE) {
+            ##### UI code for login page
+            fluidPage(title = 'Owl - Store intelligence',
+                      fluidRow(
+                        column(width = 2,
+                        tags$img(src = 'logo.jpg', width = '70%')),
+                        column(width =8, offset = 2,
+                               div(style = 'height:200px',
+                                   tags$p(style = 'position:relative; bottom:-100px', strong(style = 'font-size:60px;color:#065AA2;', 'Owl'), span(style = 'font-size:35px;color:white; ', ' - Store intelligence'))
+                               )
+                        )
+                      ),
+                      fluidRow(
+                        column(width = 2, offset = 5,
+                               uiOutput("uiLogin"),
+                               uiOutput("pass")
+                        )
+                      )
+            )
+          }else{
+          tabItems(
+            tabItem(
+              tabName = "competitor",
+              br(),
+              fluidRow(column(
+                2, offset = 6,
+                selectInput(
+                  "compBrand",
+                  label = NULL,
+                  choices = c("格力" = 'gree',
+                              "美的" = 'midea')
+                )
+              ),
+              column(
+                2,
+                selectInput(
+                  'compLevel',
+                  label = NULL,
+                  choices = c('省级' = 'province',
+                              '市级' = 'city')
+                )
+              )),
+              br(),
+              fluidRow(
+                tags$style(
+                  ".nav-tabs {
+                  background-color: black;
+        }
+                  
+                  .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                  background-color: transparent;
+                  border-color: transparent;
+                  color: #FFF
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.active {
+                  border-top-color: #FFF;
+                  color: #FFF;
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.header {
+                  color: #fff;
+                  }
+                  
+                  .nav-tabs-custom .tab-content {
+                  background: none repeat scroll 0% 0% black;
+                  color: #fff;
+                  padding: 10px;
+                  border-bottom-right-radius: 3px;
+                  border-bottom-left-radius: 3px;
+                  }
+                  "
+                ),
+                tabBox(
+                  title = "海尔门店分布",
+                  width = 6,
+                  tabPanel(title = h4('分布情况'),
+                           leafletOutput('haierCompMap')),
+                  tabPanel(title = h4('优势对比'),
+                           leafletOutput('compRateMap'))
+                ),
+                tabBox(
+                  title = '竞争品牌门店分布',
+                  width = 6,
+                  tabPanel(title = h4('分布情况'),
+                           leafletOutput('compMap'))
+                  
+                )
+                ),
+              br(),
+              
+              fluidRow(
+                valueBoxOutput('HaierProvCover', width = 2),
+                valueBoxOutput('HaierCityCover', width = 2),
+                valueBoxOutput('HaierShopCover', width = 2),
+                valueBoxOutput('CompProvCover', width = 2),
+                valueBoxOutput('CompCityCover', width = 2),
+                valueBoxOutput('CompShopCover', width = 2)
+              ),
+              br(),
+              fluidRow(
+                tags$style(
+                  ".nav-tabs {
+                  background-color: black;
+        }
+                  
+                  .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                  background-color: transparent;
+                  border-color: transparent;
+                  color: #FFF
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.active {
+                  border-top-color: #FFF;
+                  color: #FFF;
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.header {
+                  color: #fff;
+                  }
+                  
+                  .nav-tabs-custom .tab-content {
+                  background: none repeat scroll 0% 0% black;
+                  color: #fff;
+                  padding: 10px;
+                  border-bottom-right-radius: 3px;
+                  border-bottom-left-radius: 3px;
+                  }
+                  "
+                ),
+                tabBox(
+                  title = "海尔门店数排名",
+                  width = 6,
+                  tabPanel(
+                    title = h4('海尔'),
+                    highchartOutput('shopNumHaier', height = '250px')
+                  )
+                ),
+                tabBox(
+                  title = "竞品门店数排名",
+                  width = 6,
+                  tabPanel(title = h4('格力'),
+                           highchartOutput('shopNumGree', height = '250px')),
+                  tabPanel(
+                    title = h4('美的'),
+                    highchartOutput('shopNumMidea', height = '250px')
+                  )
+                )
+                ),
+              br(),
+              fluidRow(
+                tags$style(
+                  ".nav-tabs {
+                  background-color: black;
+      }
+                  
+                  .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                  background-color: transparent;
+                  border-color: transparent;
+                  color: #FFF
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.active {
+                  border-top-color: #FFF;
+                  color: #FFF;
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.header {
+                  color: #fff;
+                  }
+                  
+                  .nav-tabs-custom .tab-content {
+                  background: none repeat scroll 0% 0% black;
+                  color: #fff;
+                  padding: 10px;
+                  border-bottom-right-radius: 3px;
+                  border-bottom-left-radius: 3px;
+                  }
+                  "
+                ),
+                tabBox(
+                  title = "海尔门店密度排名",
+                  width = 6,
+                  tabPanel(
+                    title = h4('海尔'),
+                    highchartOutput('shopDensityHaier', height = '300px')
+                  )
+                ),
+                tabBox(
+                  title = "竞品门店密度排名",
+                  width = 6,
+                  tabPanel(
+                    title = h4('格力'),
+                    highchartOutput('shopDensityGree', height = '300px')
+                  ),
+                  tabPanel(
+                    title = h4('美的'),
+                    highchartOutput('shopDensityMidea', height = '300px')
+                  )
+                )
+                
+                ),
+              hr(),
+              fluidRow(column(
+                2,
+                selectInput('mapCity', '城市', choices = c('上海', '郑州'))
+              )),
+              br(),
+              fluidRow(
+                tags$style("
+                           .marker-cluster-small {
+                           background-color:  rgba(173, 216, 230, 0.6);
+                           }
+                           
+                           .marker-cluster-small div {
+                           background-color:  rgba(30,144, 255, 0.6);
+                           }
+                           
+                           .marker-cluster-medium {
+                           background-color:  rgba(84, 255, 159, 0.6);
+                           }
+                           
+                           .marker-cluster-medium div {
+                           background-color:  rgba(102, 205, 0, 0.6);
+                           }
+                           
+                           .marker-cluster-large{
+                           background-color:  rgba(205, 91, 69, 0.6);
+                           }
+                           
+                           .marker-cluster-large div {
+                           background-color:  rgba(238, 64, 0, 0.6);
+                           }
+                           "),
+                column(12,
+                       leafletOutput('mapAll', height = 600))),
+              br(),
+              fluidRow(
+                tags$style(
+                  ".nav-tabs {
+                  background-color: black;
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                  background-color: transparent;
+                  border-color: transparent;
+                  color: #FFF
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.active {
+                  border-top-color: #FFF;
+                  color: #FFF;
+                  }
+                  
+                  .nav-tabs-custom .nav-tabs li.header {
+                  color: #fff;
+                  }
+                  
+                  .nav-tabs-custom .tab-content {
+                  background: none repeat scroll 0% 0% black;
+                  color: #fff;
+                  padding: 10px;
+                  border-bottom-right-radius: 3px;
+                  border-bottom-left-radius: 3px;
+                  }
+                  "),
+                tabBox(
+                  title = "门店详细信息",
+                  width = 12,
+                  tabPanel(title = h4('海尔'),
+                           dataTableOutput('haierTable')),
+                  tabPanel(title = h4('格力'),
+                           dataTableOutput('GreeTable')),
+                  tabPanel(title = h4('美的'),
+                           dataTableOutput('MideaTable'))
+                )
+                )
+          ),
+          
+          tabItem(
+            tabName = 'placeScore',
+            fluidRow(
+              valueBoxOutput('cityGDP', width = 3),
+              valueBoxOutput('cityPop', width = 3),
+              valueBoxOutput('cityPprice', width = 3),
+              valueBoxOutput('citySalary', width = 3)
+              
+            ),
+            br(),
+            fluidRow(
+              tags$style(
+                ".nav-tabs {
+                background-color: black;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                background-color: transparent;
+                border-color: transparent;
+                color: #FFF
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active {
+                border-top-color: #FFF;
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.header {
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .tab-content {
+                background: none repeat scroll 0% 0% black;
+                color: #fff;
+                padding: 10px;
+                border-bottom-right-radius: 3px;
+                border-bottom-left-radius: 3px;
+                }
+                "
+              ),
+              
+              tabBox(
+                width = 6,
+                title = '发展指标',
+                side = 'left',
+                tabPanel(
+                  title = h4('国内生产总值&年末总人口'),
+                  highchartOutput('cityDev1', height = '300px')
+                ),
+                tabPanel(
+                  title = h4('平均工资&住宅均价'),
+                  highchartOutput('cityDev2', height = '300px')
+                )
+              ),
+              box(
+                width = 6,
+                title = '城市人口密度',
+                solidHeader = TRUE,
+                background = 'black',
+                highchartOutput('cityDensity',  height = '300px')
+              )
+              ),
+            br(),
+            fluidRow(
+              tags$style(
+                ".nav-tabs {
+                background-color: black;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                background-color: transparent;
+                border-color: transparent;
+                color: #FFF
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active {
+                border-top-color: #FFF;
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.header {
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .tab-content {
+                background: none repeat scroll 0% 0% black;
+                color: #fff;
+                padding: 10px;
+                border-bottom-right-radius: 3px;
+                border-bottom-left-radius: 3px;
+                }
+                "
+              ),
+              tabBox(
+                title = '商圈细分',
+                width = 6,
+                side = 'left',
+                tabPanel(title = h4('网格得分'),
+                         dataTableOutput('networkScore')),
+                tabPanel(
+                  title = h4('指数雷达'),
+                  highchartOutput('scoreRadar', height = '350px')
+                )
+              ),
+              box(
+                title = '信息指数排名',
+                width = 6,
+                solid = TRUE,
+                background = 'black',
+                highchartOutput('scoreBestWorst', height = '600px')
+              )
+              
+              ),
+            br(),
+            fluidRow(
+              column(2,
+                     selectInput(
+                       'scoreCity',
+                       'City',
+                       choices = c('上海', '郑州'),
+                       selected = '郑州'
+                     )),
+              column(2,
+                     uiOutput('scoreDistrict')
+              ),
+              column(4,
+                     uiOutput('scoreShop')
+              )
+            ),
+            br(),
+            fluidRow(
+              tags$style(
+                ".nav-tabs {
+                background-color: black;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active:hover a, .nav-tabs-custom .nav-tabs li.active a {
+                background-color: transparent;
+                border-color: transparent;
+                color: #FFF
+                }
+                
+                .nav-tabs-custom .nav-tabs li.active {
+                border-top-color: #FFF;
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .nav-tabs li.header {
+                color: #FFF;
+                }
+                
+                .nav-tabs-custom .tab-content {
+                background: none repeat scroll 0% 0% black;
+                color: #fff;
+                padding: 10px;
+                border-bottom-right-radius: 3px;
+                border-bottom-left-radius: 3px;
+                }
+                "
+              ),
+              uiOutput('scoreBox')
+              
+              ),
+            fluidRow(
+              useShinyjs(),
+              tags$style("
+                         #scoreWiki {
+                         color: #FFF
+                         }
+                         "),
+              column(
+                width = 4,
+                actionButton("btn1", "如何计算信息中心指数？"),
+                br(),
+                div(
+                  id = 'scoreWiki',
+                  '根据每家店的店面定位位置，抓取周围特定距离内的POI信息。
+                  抓取的范围包括生活信息（小区、超市、银行等）、交通信息（公交站、停车场等）、商业信息（超市、商场等）、发展信息（小区等）和竞争信息（竞争对店铺位置）。
+                  信息中心指数根据上述的五个维度的信息指数再加权平均计算得出。'
+                )
+                )
+                ),
+            br(),
+            fluidRow(
+              box(
+                width = 12,
+                title = '信息点地图',
+                solidHeader = TRUE,
+                background = "black",
+                leafletOutput('mapPlace', height = 600)
+              )
+            )
+              ),
+          tabItem(
+            tabName = 'finScore',
+            fluidRow(
+              column(2,
+                     selectInput(
+                       'scoreCity3',
+                       '城市',
+                       choices = c('上海', '郑州'),
+                       selected = '郑州'
+                     )),
+              column(2,
+                     uiOutput('scoreDistrict3')),
+              column(4,
+                     uiOutput('scoreShop3'))
+            ),
+            fluidRow(uiOutput('comparisonScore')),
+            fluidRow(
+              useShinyjs(),
+              tags$style("
+                         #densityWiki {
+                         color: #FFF
+                         }
+                         "),
+              column(
+                width = 4,
+                actionButton("btn2", "如何计算门店客流量？"),
+                br(),
+                div(
+                  id = 'densityWiki',
+                  '门店客流量计算主要依托百度大数据，以每月为基准，根据门店周围半径50米内，抓取停留时间超过15分钟的客流量。百度抓取的客流量与实际客流量存在一定的转化比例。'
+                )
+              )
+              ),
+            br(),
+            fluidRow(
+              box(
+                width = 6,
+                title = '多店关联对比-收入',
+                solid = TRUE,
+                background = 'black',
+                
+                highchartOutput('revCompChart', height = '300px')
+              ),
+              box(
+                width = 6,
+                title = '多店关联对比-客流量',
+                solid = TRUE,
+                background = 'black',
+                highchartOutput('trafficCompChart', height = '300px')
+              )
+            ),
+            hr(),
+            fluidRow(
+              column(2,
+                     selectInput('scoreCity2', '城市', choices = c('上海', '郑州'))),
+              column(2,
+                     uiOutput('scoreDistrict2')
+              ),
+              column(4,
+                     uiOutput('scoreShop2')
+              )
+            ),
+            
+            # fluidRow(
+            #   box(width = 12, title = '收入销量趋势', solid = TRUE, background = 'black',
+            #
+            #            highchartOutput('revChart')
+            #          )
+            # ),
+            fluidRow(
+              valueBoxOutput('lyRevenue', width = 3),
+              valueBoxOutput('hyRevenue', width = 3),
+              valueBoxOutput('lmRevenue', width = 3),
+              valueBoxOutput('lwRevenue', width = 3)
+            ),
+            fluidRow(
+              valueBoxOutput('lyQuantity', width = 3),
+              valueBoxOutput('hyQuantity', width = 3),
+              valueBoxOutput('lmQuantity', width = 3),
+              valueBoxOutput('lwQuantity', width = 3)
+            )
+          ),
+          tabItem(tabName = 'userProfile')
+          
+          )
+          }
+        })
+        
+        # server side code
         output$haierCompMap <- renderLeaflet({
-          #haierMapInput()
           haierMap(level = input$compLevel)
         })
         
@@ -1942,7 +1976,7 @@ ui <- dashboardPage(
             group_by(finScoreDemo, name) %>% summarize(
               revenue = sum(revenue, na.rm = TRUE),
               quantity = sum(quantity, na.rm = TRUE)
-            ) %>% mutate(color = c('turquoise', 'steelblue', 'lightcoral'))
+            ) %>% mutate(color = c('rgba(64,224,208,0.5)', 'rgba(70,130,180,0.5)', 'rgba(240,128,128,0.5)'))
           
           highchart() %>%
             #hc_chart(type = 'column') %>%
@@ -1953,19 +1987,19 @@ ui <- dashboardPage(
             hc_add_series(
               data = filter(table1, name == '河南清河工贸CBD店')$ym_revenue,
               type = 'column',
-              color = 'turquoise',
+              color = 'rgba(64,224,208,0.8)',
               name = '河南清河工贸CBD店-收入'
             ) %>%
             hc_add_series(
               data = filter(table1, name == '郑州锐达CBD店')$ym_revenue,
               type = 'column',
-              color = 'LightCoral',
+              color = 'rgba(240,128,128,0.8)',
               name = '郑州锐达CBD店-收入'
             ) %>%
             hc_add_series(
               data = filter(table1, name == '郑州丹尼斯人民路锐达店')$ym_revenue,
               type = 'column',
-              color = 'SteelBlue',
+              color = 'rgba(70,130,180,0.8)',
               name = '郑州丹尼斯人民路锐达店-收入'
             ) %>%
             hc_add_series(
@@ -1989,7 +2023,7 @@ ui <- dashboardPage(
             ) %>% filter(ym != '2016-12')
           
           highchart() %>%
-            #hc_chart(type = 'column') %>%
+            hc_chart(type = 'areaspline') %>%
             hc_xAxis(
               categories = table1$ym,
               startOnTick = FALSE,
@@ -1999,20 +2033,17 @@ ui <- dashboardPage(
                      labels = list(style = list(color = 'white'))) %>%
             hc_add_series(
               data = filter(table1, name == '河南清河工贸CBD店')$ym_quantity,
-              type = 'areaspline',
-              color = 'turquoise',
+              fillColor = 'rgba(62,244,208,0.8)',
               name = '河南清河工贸CBD店-客流量'
             ) %>%
             hc_add_series(
               data = filter(table1, name == '郑州锐达CBD店')$ym_quantity,
-              type = 'areaspline',
-              color = 'LightCoral',
+              color = 'rgba(240,128,128,0.8)',
               name = '郑州锐达CBD店-客流量'
             ) %>%
             hc_add_series(
               data = filter(table1, name == '郑州丹尼斯人民路锐达店')$ym_quantity,
-              type = 'areaspline',
-              color = 'SteelBlue',
+              fillColor = 'rgba(70,130,180,0.8)',
               name = '郑州丹尼斯人民路锐达店-客流量'
             ) %>%
             hc_tooltip(split = TRUE) %>%
@@ -2257,6 +2288,100 @@ ui <- dashboardPage(
             subtitle = '最近一周销量',
             color = col
           )
+        })
+        
+        #### PASSWORD server code ---------------------------------------------------- 
+        # reactive value containing user's authentication status
+        user_input <- reactiveValues(authenticated = FALSE, valid_credentials = FALSE, 
+                                     user_locked_out = FALSE, status = "")
+        
+        # authenticate user by:
+        #   1. checking whether their user name and password are in the credentials 
+        #       data frame and on the same row (credentials are valid)
+        #   2. if credentials are valid, retrieve their lockout status from the data frame
+        #   3. if user has failed login too many times and is not currently locked out, 
+        #       change locked out status to TRUE in credentials DF and save DF to file
+        #   4. if user is not authenticated, determine whether the user name or the password 
+        #       is bad (username precedent over pw) or he is locked out. set status value for
+        #       error message code below
+        observeEvent(input$login_button, {
+          credentials <- readRDS("credentials/credentials.rds")
+          
+          row_username <- which(credentials$user == input$user_name)
+          row_password <- which(credentials$pw == digest(input$password)) # digest() makes md5 hash of password
+          
+          # if user name row and password name row are same, credentials are valid
+          #   and retrieve locked out status
+          if (length(row_username) == 1 && 
+              length(row_password) >= 1 &&  # more than one user may have same pw
+              (row_username %in% row_password)) {
+            user_input$valid_credentials <- TRUE
+            user_input$user_locked_out <- credentials$locked_out[row_username]
+          }
+          
+          # if user is not currently locked out but has now failed login too many times:
+          #   1. set current lockout status to TRUE
+          #   2. if username is present in credentials DF, set locked out status in 
+          #     credentials DF to TRUE and save DF
+          if (input$login_button == num_fails_to_lockout & 
+              user_input$user_locked_out == FALSE) {
+            
+            user_input$user_locked_out <- TRUE
+            
+            if (length(row_username) == 1) {
+              credentials$locked_out[row_username] <- TRUE
+              
+              saveRDS(credentials, "credentials/credentials.rds")
+            }
+          }
+          
+          # if a user has valid credentials and is not locked out, he is authenticated      
+          if (user_input$valid_credentials == TRUE & user_input$user_locked_out == FALSE) {
+            user_input$authenticated <- TRUE
+          } else {
+            user_input$authenticated <- FALSE
+          }
+          
+          # if user is not authenticated, set login status variable for error messages below
+          if (user_input$authenticated == FALSE) {
+            if (user_input$user_locked_out == TRUE) {
+              user_input$status <- "locked_out"  
+            } else if (length(row_username) > 1) {
+              user_input$status <- "credentials_data_error"  
+            } else if (input$user_name == "" || length(row_username) == 0) {
+              user_input$status <- "bad_user"
+            } else if (input$password == "" || length(row_password) == 0) {
+              user_input$status <- "bad_password"
+            }
+          }
+        })   
+        
+        # password entry UI componenets:
+        #   username and password text fields, login button
+        output$uiLogin <- renderUI({
+          wellPanel(style = 'margin: 50px 0px 0px 0px',
+                    textInput("user_name", "User Name:"),
+                    
+                    passwordInput("password", "Password:"),
+                    
+                    actionButton("login_button", "Log in")
+          )
+        })
+        
+        # red error message if bad credentials
+        output$pass <- renderUI({
+          if (user_input$status == "locked_out") {
+            h5(strong(paste0("Your account is locked because of too many\n",
+                             "failed login attempts. Contact administrator."), style = "color:red"), align = "center")
+          } else if (user_input$status == "credentials_data_error") {    
+            h5(strong("Credentials data error - contact administrator!", style = "color:red"), align = "center")
+          } else if (user_input$status == "bad_user") {
+            h5(strong("User name not found!", style = "color:red"), align = "center")
+          } else if (user_input$status == "bad_password") {
+            h5(strong("Incorrect password!", style = "color:red"), align = "center")
+          } else {
+            ""
+          }
         })
       }
       
