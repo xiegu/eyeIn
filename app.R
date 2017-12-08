@@ -8,6 +8,7 @@ library(highcharter)
 library(lubridate)
 library(DT)
 library(scales)
+library(digest)
 
 # GDP_topCity_China <- read_excel("data/GDP_topCity_China.xls")
 # Pop_topCity_China <- read_excel("data/Pop_topCity_China.xls")
