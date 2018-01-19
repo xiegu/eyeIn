@@ -190,22 +190,26 @@ compRateMap <- function(level = 'province', competitor = 'gree'){
     )
 }
 
-
-
-zzMap <- function(){
+cityMap <- function(chengshi){
+  cityTable <- filter(haierTable, city == chengshi)
+  cityGree <- filter(gree, city == chengshi)
+  cityMidea <- filter(midea, city == chengshi)
+  city_pop_area <- filter(china_pop_area, city == chengshi)
+  districtDF <- data.frame(city_pop_area$division, city_pop_area$popoverarea)
+  districtMap <- leafletGeo(chengshi, districtDF)
 pal <- colorNumeric(
   palette = "Blues",
-  domain = zzDistrictMap$value)
+  domain = districtMap$value)
 
 pop1 <- paste0("<strong>区域: </strong>", 
-               zzDistrictMap$name, 
+               districtMap$name, 
                "<br><strong>", 
                "人口密度(人数/平方千米)", 
                ": </strong>", 
-               zzDistrictMap$value
+               districtMap$value
 )
 
-leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
+leaflet(districtMap)%>%amap(group = '高德')%>%
   addProviderTiles(providers$CartoDB.DarkMatter, group = "黑底") %>%   
   addPolygons(stroke = TRUE,
               smoothFactor = 1,
@@ -217,7 +221,7 @@ leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
               highlightOptions = highlightOptions(color = "white", weight = 2,
                                                   bringToFront = TRUE)
   )%>%
-  addMarkers(data = haierZhengzhouTable, ~longitude, ~latitude,
+  addMarkers(data = cityTable, ~longitude, ~latitude,
              clusterOptions = markerClusterOptions(
                iconCreateFunction = JS("function (cluster) {
                                          var childCount = cluster.getChildCount();
@@ -226,20 +230,16 @@ leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
                  }")
              ),
              popup = paste0("<strong>名称: </strong>", 
-                            haierZhengzhouTable$name, 
-                            "<br><strong>", 
-                            "电话", 
-                            ": </strong>", 
-                            haierZhengzhouTable$telephone,
+                            cityTable$name, 
                             "<br><strong>", 
                             "地址", 
                             ": </strong>",
-                            haierZhengzhouTable$address
+                            cityTable$address
              ),
              icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png", iconWidth = 20, iconHeight =32),
              group = '海尔专卖店'
              )%>%
-  addMarkers(data = greeZhengzhou, ~longitude, ~latitude,
+  addMarkers(data = cityGree, ~longitude, ~latitude,
              clusterOptions = markerClusterOptions(
                iconCreateFunction = JS("function (cluster) {
                                          var childCount = cluster.getChildCount();
@@ -248,20 +248,16 @@ leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
                  }")
              ),
              popup = paste0("<strong>名称: </strong>", 
-                            greeZhengzhou$name, 
-                            "<br><strong>", 
-                            "电话", 
-                            ": </strong>", 
-                            greeZhengzhou$telephone,
+                            cityGree$name, 
                             "<br><strong>", 
                             "地址", 
                             ": </strong>",
-                            greeZhengzhou$address
+                            cityGree$address
              ),
              icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png", iconWidth = 20, iconHeight =32),
              group = '格力专卖店'
              )%>%
-  addMarkers(data = mideaZhengzhou, ~longitude, ~latitude,
+  addMarkers(data = cityMidea, ~longitude, ~latitude,
              clusterOptions = markerClusterOptions(
                iconCreateFunction = JS("function (cluster) {
                                          var childCount = cluster.getChildCount();
@@ -270,15 +266,11 @@ leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
                  }")
              ),
              popup = paste0("<strong>名称: </strong>", 
-                            mideaZhengzhou$name, 
-                            "<br><strong>", 
-                            "电话", 
-                            ": </strong>", 
-                            mideaZhengzhou$telephone,
+                            cityMidea$name, 
                             "<br><strong>", 
                             "地址", 
                             ": </strong>",
-                            mideaZhengzhou$address
+                            cityMidea$address
              ),
              icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png", iconWidth = 20, iconHeight =32),
              group = '美的专卖店'
@@ -290,119 +282,15 @@ leaflet(zzDistrictMap)%>%amap(group = '高德')%>%
   )
 }
 
-shMap <- function(){
-  pal <- colorNumeric(
-    palette = "Blues",
-    domain = shDistrictMap$value)
+placeMap <- function(chengshi, shop){
+    placeTable <- filter(haierTable, (city == chengshi) & (name %in% shop))
   
-  pop1 <- paste0("<strong>区域: </strong>", 
-                 shDistrictMap$name, 
-                 "<br><strong>", 
-                 "人口密度(人数/平方千米)", 
-                 ": </strong>", 
-                 shDistrictMap$value
-  )
-  
-  leaflet(shDistrictMap)%>%amap(group = '高德')%>%
-    addProviderTiles(providers$CartoDB.DarkMatter, group = "黑底") %>%   
-    addPolygons(stroke = TRUE,
-                smoothFactor = 1,
-                fillOpacity = 0.7,
-                weight = 1,
-                color = ~pal(value),
-                popup = pop1,
-                group = '行政区',
-                highlightOptions = highlightOptions(color = "white", weight = 2,
-                                                    bringToFront = TRUE)
-    )%>%
-    addMarkers(data = haierShanghaiTable, ~longitude, ~latitude, 
-               clusterOptions = markerClusterOptions(
-                 iconCreateFunction = JS("function (cluster) {
-                                         var childCount = cluster.getChildCount();
-                                         var c = ' marker-cluster-small';
-                                         return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40)})
-                 }")
-               ),
-               popup = paste0("<strong>名称: </strong>", 
-                              haierShanghaiTable$name, 
-                              "<br><strong>", 
-                              "电话", 
-                              ": </strong>", 
-                              haierShanghaiTable$telephone,
-                              "<br><strong>", 
-                              "地址", 
-                              ": </strong>",
-                              haierShanghaiTable$address
-               ),
-               icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png", iconWidth = 20, iconHeight =32),
-               group = '海尔专卖店'
-    )%>%
-    addMarkers(data = greeShanghai, ~longitude, ~latitude, 
-               clusterOptions = markerClusterOptions(
-                 iconCreateFunction = JS("function (cluster) {
-                                         var childCount = cluster.getChildCount();
-                                         var c = ' marker-cluster-medium';
-                                         return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40)})
-                 }")
-               ),
-               popup = paste0("<strong>名称: </strong>", 
-                              greeShanghai$name, 
-                              "<br><strong>", 
-                              "电话", 
-                              ": </strong>", 
-                              greeShanghai$telephone,
-                              "<br><strong>", 
-                              "地址", 
-                              ": </strong>",
-                              greeShanghai$address
-               ),
-               icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png", iconWidth = 20, iconHeight =32),
-               group = '格力专卖店'
-    )%>%
-    addMarkers(data = mideaShanghai, ~longitude, ~latitude, clusterOptions = markerClusterOptions(
-      iconCreateFunction = JS("function (cluster) {
-                                         var childCount = cluster.getChildCount();
-                                         var c = ' marker-cluster-large';
-                                         return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40)})
-                 }")
-    ),
-               popup = paste0("<strong>名称: </strong>", 
-                              mideaShanghai$name, 
-                              "<br><strong>", 
-                              "电话", 
-                              ": </strong>", 
-                              mideaShanghai$telephone,
-                              "<br><strong>", 
-                              "地址", 
-                              ": </strong>",
-                              mideaShanghai$address
-               ),
-               icon = makeIcon("https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png", iconWidth = 20, iconHeight =32),
-               group = '美的专卖店'
-    )%>%
-    addLayersControl( 
-      baseGroups = c("高德", "黑底"),                     
-      overlayGroups = c("行政区","海尔专卖店", "格力专卖店", "美的专卖店"),
-      options = layersControlOptions(collapsed = FALSE)
-    )
-}
-
-placeMap <- function(city, shop){
-  if(city == '上海'){
-    placeTable <- subset(haierShanghaiTable, name %in% shop)
-  }else{
-    placeTable <- subset(haierZhengzhouTable, name %in% shop)
-  }
   leaflet()%>%amap(group = "高德")%>%
     #setView(data = placeTable, ~longitude, ~latitude, zoom = 10)%>%
     addProviderTiles(providers$CartoDB.DarkMatter, group = "黑底") %>%   
     addMarkers(data = placeTable, ~longitude, ~latitude, 
                popup = paste0("<span style=\"color:black\"><strong>名称: </strong>", 
                               placeTable$name, 
-                              "<br><strong>", 
-                              "电话", 
-                              ": </strong>", 
-                              placeTable$telephone,
                               "<br><strong>", 
                               "地址", 
                               ": </strong>",
